@@ -5,8 +5,8 @@ window.APP_CONFIG = {
   // Supabase Dashboard → Project Settings → API Keys.
   // Để nguyên "YOUR_..." thì trang chạy ở CHẾ ĐỘ DEMO:
   // dữ liệu chỉ lưu trên trình duyệt này, mã OTP demo luôn là 123456.
-  supabaseUrl: "YOUR_SUPABASE_URL",
-  supabaseAnonKey: "YOUR_SUPABASE_ANON_OR_PUBLISHABLE_KEY",
+  supabaseUrl: "https://isosdbdbwhjyqxiulyyz.supabase.co",
+  supabaseAnonKey: "sb_publishable_eCDEIIPGADzm-ENcNyNEug_WkdGFl9M",
 
   siteName: "một lời chúc",
   occasion: "20 · 10 · 2026",
@@ -39,17 +39,20 @@ window.APP_CONFIG = {
   // badge: huy hiệu nhỏ cạnh avatar, lấy theo biệt danh
   // photo: ảnh thật, ví dụ "assets/members/ha.jpg" (null = dùng avatar vẽ ở assets/avatars/{id}.svg)
   // emailHint: gợi ý email khi đăng nhập — KHÔNG ghi email đầy đủ vì repo public
+  // hidden: true = ẩn khỏi trang (lưới chị em, vòng avatar, ô chọn tên), chỉ hiện trong dropdown gửi lời chúc.
+  //         Đăng nhập: chọn ô admin ("Test") rồi nhập email của người ẩn.
   members: [
-    { id: "ha",    name: "Thu Hà",    nickname: "Giỏi việc nước, đảm việc nhà, nheo nhóc vì đàn em thơ", badge: "🏡", photo: null, emailHint: "ha***@dsc.com.vn" },
-    { id: "chi",   name: "Linh Chis", nickname: "Chihuahua",                    badge: "🐶", photo: null, emailHint: "ch***@dsc.com.vn" },
-    { id: "huong", name: "Hương Thù", nickname: "Có thù với nước có màu",       badge: "💧", photo: null, emailHint: "hu***@dsc.com.vn" },
-    { id: "hang",  name: "Thu Hằng",  nickname: "80% là xem cam nhà trẻ",       badge: "📹", photo: null, emailHint: "ha***@dsc.com.vn" },
-    { id: "ly",    name: "LyLy",      nickname: "emeLY",                        badge: "✨", photo: null, emailHint: "tr***@gmail.com" },
-    { id: "nhi",   name: "Em Nhi",    nickname: "Con bot ngáo ngơ",             badge: "🤖", photo: null, emailHint: "nh***@dsc.com.vn" },
-    { id: "lan",   name: "Lan",       nickname: null,                           badge: "🌸", photo: null, emailHint: "la***@dsc.com.vn" },
+    { id: "ha", name: "Thu Hà", nickname: "Giỏi việc nước, đảm việc nhà, nheo nhóc vì đàn em thơ", badge: "🏡", photo: null, emailHint: "ha***@dsc.com.vn" },
+    { id: "chi", name: "Linh Chis", nickname: "Chihuahua", badge: "🐶", photo: null, emailHint: "ch***@dsc.com.vn" },
+    { id: "huong", name: "Hương Thù", nickname: "Có thù với nước có màu", badge: "💧", photo: null, emailHint: "hu***@dsc.com.vn" },
+    { id: "hang", name: "Thu Hằng", nickname: "80% là xem cam nhà trẻ", badge: "📹", photo: null, emailHint: "ha***@dsc.com.vn" },
+    { id: "ly", name: "LyLy", nickname: "emeLY", badge: "✨", photo: null, emailHint: "tr***@gmail.com" },
+    { id: "nhi", name: "Em Nhi", nickname: "Con bot ngáo ngơ", badge: "🤖", photo: null, emailHint: "nh***@dsc.com.vn" },
+    { id: "lan", name: "Lan", nickname: null, badge: "🌸", photo: null, emailHint: "la***@dsc.com.vn" },
+    { id: "tester", name: "Tester", nickname: null, badge: "🧪", photo: null, emailHint: "mn***@gmail.com", hidden: true },
   ],
 
-  // Tài khoản admin hiển thị với nhãn "Test" (2 email, xem members.local.sql)
+  // Tài khoản admin hiển thị với nhãn "Test" (2 email, email thật trong members.local.sql)
   adminLabel: "Test",
   adminEmailHint: "ng***@gmail.com hoặc ng***@dsc.com.vn",
 };

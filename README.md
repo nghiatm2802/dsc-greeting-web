@@ -52,7 +52,9 @@ supabase/members.local.sql Danh sách email thật (KHÔNG commit, đã nằm tr
 1. Menu trái → **SQL Editor** → **New query**.
 2. Dán toàn bộ nội dung `supabase/schema.sql` → **Run**. File này chạy lại nhiều lần vẫn an toàn.
 3. Tạo query mới, dán `supabase/members.local.sql` → **Run**.
-4. Kiểm tra: **Table Editor** → bảng `members` phải có **9 dòng** (7 chị em + `admin` + `admin2`).
+4. Kiểm tra: **Table Editor** → bảng `members` phải có **10 dòng** (7 chị em + `admin` + `admin2` + `tester`).
+
+> **Tester** là người nhận ẩn, dùng để bạn tự test. Tester chỉ hiện trong dropdown người nhận của màn gửi lời chúc, không có trong lưới chị em. Muốn đăng nhập vào Tester thì chọn ô **Test**, nhập email của Tester, và trang sẽ mở hộp thư của Tester. Người ẩn được khai báo bằng `hidden: true` trong `config.js`.
 
 ### 3.3. Tắt đăng ký tự do, kiểm tra độ dài mã
 
@@ -63,7 +65,7 @@ Vào **Authentication** → **Sign In / Providers**:
 
 ### 3.4. Tạo 9 user
 
-Vào **Authentication** → **Users** → **Add user** → **Create new user**, rồi lặp lại cho đủ 9 email trong `members.local.sql`:
+Vào **Authentication** → **Users** → **Add user** → **Create new user**, rồi lặp lại cho đủ 10 email trong `members.local.sql`:
 
 - **Email**: email thật, viết thường.
 - **Password**: gõ đại một chuỗi dài bất kỳ. Không ai dùng đến mật khẩu này vì đăng nhập bằng mã.
@@ -178,7 +180,7 @@ Mọi nội dung nằm trong `js/config.js`:
 |---|---|
 | Không nhận được mã | Xem mục Spam. Kiểm tra SMTP (App Password đúng chưa, đã bỏ dấu cách chưa). Vào **Logs** → **Auth** trên Supabase xem lỗi. |
 | "Email này chưa có trong danh sách" | Email chưa được tạo ở **Authentication → Users**, hoặc gõ sai. |
-| "Đăng nhập được nhưng chưa được gán cho chị em nào" | Email trong **Users** và bảng `members` không giống nhau (để ý chữ hoa/thường). Sửa rồi chạy lại `members.local.sql`. |
+| "Đăng nhập được nhưng chưa được gán cho chị em nào" | Email trong **Users** không có trong bảng `members`, hoặc lệch chữ hoa/thường. Sửa rồi chạy lại `members.local.sql`. |
 | "Bạn thao tác hơi nhanh" | Bị giới hạn gửi mail. Đợi 1 phút, hoặc tăng Rate Limits (mục 3.6). |
 | "Mã không đúng hoặc đã hết hạn" | Dùng mã trong email **mới nhất**. Mỗi lần bấm "Gửi lại mã" thì mã cũ hết hiệu lực. |
 | Email có link mà không có mã | Template Magic Link thiếu `{{ .Token }}` (mục 3.5). |
@@ -186,13 +188,13 @@ Mọi nội dung nằm trong `js/config.js`:
 
 ## 7. Checklist trước ngày 20/10
 
-- [ ] Bảng `members` có 9 dòng, **Users** có 9 user (đã Auto Confirm).
+- [ ] Bảng `members` có 10 dòng, **Users** có 10 user (đã Auto Confirm).
 - [ ] Đã tắt đăng ký tự do (Allow new users to sign up: off).
 - [ ] Template Magic Link có `{{ .Token }}`, OTP Length = 6.
 - [ ] Custom SMTP Gmail đã gửi thử thành công.
 - [ ] `config.js` đã có URL và key thật, nhãn demo không còn hiện.
 - [ ] Đăng nhập thử bằng 1 email chị em và bằng tài khoản Test.
-- [ ] Đã xoá các lời chúc thử trong bảng `wishes`.
+- [ ] Đã xoá các lời chúc thử trong bảng `wishes` (lời chúc gửi Tester để lại cũng được, không hiện công khai).
 - [ ] GitHub Pages chạy được, đã mở thử bằng điện thoại.
 
 ---

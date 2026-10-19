@@ -33,6 +33,8 @@
   const TINTS = ["var(--tint-1)", "var(--tint-3)", "var(--tint-4)", "var(--tint-2)"];
   const members = C.members.map((m, i) => ({ ...m, tint: TINTS[i % TINTS.length] }));
   const byId = Object.fromEntries(members.map((m) => [m.id, m]));
+  const shown = members.filter((m) => !m.hidden); // người ẩn (Tester) chỉ có trong dropdown gửi lời chúc
+  const hiddenLabel = (m) => esc(m.name) + (m.hidden ? " (ẩn)" : "");
 
   // =================================================================
   //  API — 2 chế độ: DEMO (localStorage) và Supabase
@@ -62,8 +64,12 @@
         await wait(350);
         if (token !== DEMO_OTP) throw new Error("Token has expired or is invalid");
         const p = store.get(K.pending, {});
-        const isAdmin = p.pickId === ADMIN_ID;
-        const s = { email, memberId: isAdmin ? null : p.pickId || null, isAdmin };
+        const adminTile = p.pickId === ADMIN_ID;
+        // Giống bản thật: email của người ẩn đăng nhập qua ô admin nhưng vào hộp thư của người đó
+        const hiddenMember = adminTile ? members.find((m) => m.hidden && matchesHint(email, m.emailHint)) : null;
+        const s = hiddenMember
+          ? { email, memberId: hiddenMember.id, isAdmin: false }
+          : { email, memberId: adminTile ? null : p.pickId || null, isAdmin: adminTile };
         store.set(K.session, s);
         return s;
       },
@@ -200,6 +206,105 @@
     }, 180);
   }
 
+  // Pháo hoa: nổ tròn chậm rãi, xen kẽ hai bên màn hình, thưa dần trong `ms`.
+  // Trả về hàm dừng bắn.
+  function fireworks(ms = 5000) {
+    if (typeof window.confetti !== "function" || reduceMotion) return () => {};
+    const colors = ["#E0AED0", "#AC87C5", "#FFE5E5", "#ffffff", "#f6c1d9", "#c9b8ff"];
+    const rand = (a, b) => a + Math.random() * (b - a);
+    const end = Date.now() + ms;
+    const burst = (x) => confetti({
+      particleCount: Math.round(45 + 40 * Math.max(0, end - Date.now()) / ms),
+      startVelocity: rand(16, 24), spread: 360, ticks: 170, gravity: .5, decay: .935,
+      scalar: rand(.9, 1.3), shapes: ["circle", "star"], colors, zIndex: 90,
+      origin: { x, y: rand(.12, .42) },
+      disableForReducedMotion: true,
+    });
+    let side = 0;
+    const tick = () => {
+      if (Date.now() >= end) { clearInterval(timer); return; }
+      side = 1 - side;
+      burst(side ? rand(.1, .35) : rand(.65, .9));
+      if (Math.random() < .3) setTimeout(() => burst(rand(.4, .6)), 260);
+    };
+    const timer = setInterval(tick, 620);
+    tick();
+    return () => clearInterval(timer);
+  }
+
+  // Màn hình tối dần → chữ chúc mừng + pháo hoa → hỏi "Thêm 1 lần nữa" → lặp lại.
+  // Chỉ thoát bằng nút ✕ hoặc phím Esc.
+  function nightFireworks(ms = 5000) {
+    const FADE = 1600;    // khớp transition của .night trong CSS
+    const SETTLE = 1800;  // chờ hạt cuối rơi hết rồi mới hỏi
+    const night = document.createElement("div");
+    night.className = "night";
+    night.innerHTML =
+      `<div class="night-stage" aria-live="polite">` +
+      `<div class="night-msg" data-scene="greet"><span>Chúc mừng ngày phụ nữ Việt Nam</span><b>20/10</b></div>` +
+      `<div class="night-msg night-ask" data-scene="ask" inert><span>Đã đủ vui chưa?</span>` +
+      `<small>Chưa đủ vui à?</small><button class="night-again" type="button">Thêm 1 lần nữa</button></div>` +
+      `</div>` +
+      `<button class="night-x" type="button" aria-label="Tắt pháo hoa">×</button>`;
+    document.body.appendChild(night);
+
+    let stop = () => {};
+    let closed = false;
+    let timers = [];
+    const later = (fn, t) => timers.push(setTimeout(fn, t));
+    const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
+
+    function scene(name) {
+      night.dataset.scene = name || "";
+      $$(".night-msg", night).forEach((el) => { el.inert = el.dataset.scene !== name; });
+    }
+    function round() {
+      clearTimers();
+      stop();
+      scene("greet");
+      stop = fireworks(ms);
+      later(() => {
+        scene("ask");
+        setTimeout(() => night.querySelector(".night-again").focus({ preventScroll: true }), 500);
+      }, ms + SETTLE);
+    }
+
+    const onKey = (e) => { if (e.key === "Escape" && $("#send-modal").hidden) close(); };
+    function close() {
+      if (closed) return;
+      closed = true;
+      clearTimers();
+      stop();
+      if (typeof window.confetti?.reset === "function") confetti.reset();
+      document.removeEventListener("keydown", onKey);
+      night.classList.add("leaving");
+      night.classList.remove("on");
+      setTimeout(() => night.remove(), 700);
+    }
+    night.querySelector(".night-x").addEventListener("click", close);
+    night.querySelector(".night-again").addEventListener("click", round);
+    document.addEventListener("keydown", onKey);
+
+    scene("");
+    requestAnimationFrame(() => requestAnimationFrame(() => night.classList.add("on")));
+    later(round, FADE * .8);
+  }
+
+  // Chạm đáy trang lần đầu (mỗi lần tải trang) → bắn pháo hoa
+  function setupFooterFireworks() {
+    if (!("IntersectionObserver" in window) || reduceMotion) return;
+    const end = document.createElement("div");
+    end.setAttribute("aria-hidden", "true");
+    end.style.height = "1px";
+    $(".ftr").appendChild(end);
+    const io = new IntersectionObserver(([en]) => {
+      if (!en.isIntersecting) return;
+      io.disconnect();
+      nightFireworks(5000);
+    });
+    io.observe(end);
+  }
+
   // =================================================================
   //  Render nội dung tĩnh
   // =================================================================
@@ -211,8 +316,8 @@
     $$("[data-site-name]").forEach((el) => { el.textContent = C.siteName; });
     $$("[data-occasion]").forEach((el) => { el.textContent = C.occasion; });
 
-    $("#hero-stack").innerHTML = members.slice(0, 5).map((m) => avatar(m, { badge: false })).join("");
-    $("#orbit").insertAdjacentHTML("beforeend", members.map((m, i) => {
+    $("#hero-stack").innerHTML = shown.slice(0, 5).map((m) => avatar(m, { badge: false })).join("");
+    $("#orbit").insertAdjacentHTML("beforeend", shown.map((m, i) => {
       const [x, y, s] = ORBIT[i % ORBIT.length];
       return `<div class="o" style="left:${x}%;top:${y}%;--os:${s}px">` +
         `<button class="o-in" type="button" data-send="${esc(m.id)}" aria-label="Gửi lời chúc tới ${esc(m.name)}">` +
@@ -227,7 +332,7 @@
       `<article class="sub glass" style="--tint:${TINTS[i % TINTS.length]}">` +
       `<span class="ic" aria-hidden="true">${esc(s.icon)}</span><h3>${esc(s.title)}</h3><p>${esc(s.text)}</p></article>`).join("");
 
-    $("#members").innerHTML = members.map((m) =>
+    $("#members").innerHTML = shown.map((m) =>
       `<article class="mem glass">${avatar(m)}<h3>${esc(m.name)}</h3>` +
       `<div class="nick">${m.nickname ? "“" + esc(m.nickname) + "”" : ""}</div>` +
       `<div class="count"><b data-count="${esc(m.id)}">–</b> lời chúc</div>` +
@@ -235,7 +340,7 @@
       `<article class="mem glass more">${flowerSvg(40)}<b>Bạn là một trong 7 chị em?</b>` +
       `<p>Mở hộp thư để đọc lời chúc gửi mình.</p><a class="btn btn-ghost btn-sm" href="#hop-thu">Mở hộp thư</a></article>`;
 
-    $("#pick").innerHTML = members.map((m) =>
+    $("#pick").innerHTML = shown.map((m) =>
       `<button type="button" role="radio" aria-checked="false" data-pick="${esc(m.id)}">${avatar(m, { badge: false })}${esc(m.name)}</button>`).join("") +
       `<button type="button" role="radio" aria-checked="false" data-pick="${ADMIN_ID}"><span class="admin-ic" aria-hidden="true">★</span>${esc(ADMIN_LABEL)}</button>`;
 
@@ -253,7 +358,7 @@
     let total = 0;
     for (const m of members) {
       const n = counts[m.id] || 0;
-      total += n;
+      if (!m.hidden) total += n; // lời chúc gửi người ẩn không tính vào tổng công khai
       $$(`[data-count="${m.id}"]`).forEach((el) => { el.textContent = n; });
     }
     $("#hero-total").innerHTML = total
@@ -486,7 +591,10 @@
       const email = $("#login-email").value.trim().toLowerCase();
       if (!picked) { showErr(err, "Chọn tên của bạn trước nhé."); return; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr(err, "Email chưa đúng định dạng."); $("#login-email").focus(); return; }
-      if (!matchesHint(email, hintFor(picked))) {
+      // Ô admin cũng nhận email của người ẩn (Tester); gợi ý này không hiện ra
+      const accepted = [hintFor(picked), ...(picked === ADMIN_ID ? members.filter((m) => m.hidden).map((m) => m.emailHint) : [])]
+        .filter(Boolean).join(" hoặc ");
+      if (!matchesHint(email, accepted)) {
         showErr(err, `Email chưa khớp với gợi ý của ${nameFor(picked)} (${hintParts(hintFor(picked)).join(" hoặc ")}). Kiểm tra lại nhé.`);
         $("#login-email").focus();
         return;
@@ -617,11 +725,11 @@
       `<button class="btn btn-ghost btn-sm" type="button" data-act="logout">Đăng xuất</button></div></div>` +
       `<div class="chips" role="group" aria-label="Lọc theo người nhận">` +
       `<button class="chip all" type="button" data-filter="all" aria-pressed="${adminFilter === "all"}">Tất cả <em>${wishes.length}</em></button>` +
-      members.map((m) => `<button class="chip" type="button" data-filter="${esc(m.id)}" aria-pressed="${adminFilter === m.id}">${avatar(m, { badge: false })}${esc(m.name)} <em>${per[m.id] || 0}</em></button>`).join("") +
+      members.map((m) => `<button class="chip" type="button" data-filter="${esc(m.id)}" aria-pressed="${adminFilter === m.id}">${avatar(m, { badge: false })}${hiddenLabel(m)} <em>${per[m.id] || 0}</em></button>`).join("") +
       `</div><div class="groups">` +
       shown.map((m) => {
         const rows = wishes.filter((w) => w.recipient_id === m.id);
-        return `<div class="group glass"><div class="group-h">${avatar(m, { badge: false })}<b>${esc(m.name)}</b><span>${rows.length} lời chúc</span></div>` +
+        return `<div class="group glass"><div class="group-h">${avatar(m, { badge: false })}<b>${hiddenLabel(m)}</b><span>${rows.length} lời chúc</span></div>` +
           (rows.length
             ? `<div class="tbl-wrap"><table><thead><tr><th scope="col">Người gửi</th><th scope="col">Lời chúc</th><th scope="col">Thời gian</th></tr></thead><tbody>` +
               rows.map((w) => `<tr><td class="who${w.sender_name ? "" : " anon"}">${w.sender_name ? esc(w.sender_name) : "Ẩn danh"}</td>` +
@@ -834,6 +942,7 @@
     setupInboxView();
     setupMotion();
     startPetals();
+    setupFooterFireworks();
     if (DEMO) console.info("[một lời chúc] Chế độ DEMO: dữ liệu lưu trong trình duyệt, mã OTP là " + DEMO_OTP);
     if (!api) { toast("Không kết nối được máy chủ. Tải lại trang thử nhé.", "error"); return; }
     refreshCounts();

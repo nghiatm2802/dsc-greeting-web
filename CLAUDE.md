@@ -70,6 +70,12 @@ CÒN LẠI:
 - Đăng nhập hộp thư: chọn tên bằng lưới avatar (7 chị em + ô "Test"), không dùng dropdown.
 - Mockup ở scratchpad, đã publish: https://claude.ai/artifact/WRKeecig9si26GJVRh2ZsR
 
+## Người nhận ẩn: Tester (20/10)
+- Quy tắc: 1 người nhận = 1 email (riêng admin được 2 email). KHÔNG đổi schema (đã thử và bỏ bảng member_aliases).
+- `tester` là dòng thường trong `members` (role member), email thật trong members.local.sql. Config: `hidden: true`, `emailHint: "mn***@gmail.com"`.
+- Ẩn khỏi lưới chị em, vòng avatar, ô chọn tên, tổng số lời chúc công khai. Chỉ hiện trong dropdown gửi lời chúc và màn admin (nhãn "Tester (ẩn)").
+- Đăng nhập: chọn ô "Test" → nhập email Tester (ô Test chấp nhận cả gợi ý của người ẩn, không hiển thị) → DB trả `my_member_id = tester` → hộp thư Tester.
+
 ## Việc user tự làm (không chặn việc code)
 - Ảnh 7 chị em: bỏ vào `assets/members/` rồi điền `photo` trong `config.js`.
 - Tạo project Supabase, gửi URL và anon key.
