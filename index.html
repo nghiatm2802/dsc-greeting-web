@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>một lời chúc</title>
+  <meta name="description" content="Gửi lời chúc 20/10 tới 7 chị em của phòng mình.">
+  <meta name="theme-color" content="#fffafb">
+  <meta property="og:title" content="một lời chúc">
+  <meta property="og:description" content="Gửi lời chúc 20/10 tới 7 chị em của phòng mình.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='%23E0AED0'%3E%3Ccircle cx='12' cy='6' r='4.2'/%3E%3Ccircle cx='17.7' cy='10.2' r='4.2'/%3E%3Ccircle cx='15.5' cy='17' r='4.2'/%3E%3Ccircle cx='8.5' cy='17' r='4.2'/%3E%3Ccircle cx='6.3' cy='10.2' r='4.2'/%3E%3C/g%3E%3Ccircle cx='12' cy='12' r='3' fill='%23756AB6'/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mona+Sans:ital,wdth,wght@0,75..125,200..900;1,75..125,200..900&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Bộ lọc SVG: hiệu ứng liquid glass (chỉ Chromium dùng) + symbol dùng chung -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <filter id="liquid-glass" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.008 0.012" numOctaves="2" seed="7" result="noise"/>
+        <feGaussianBlur in="noise" stdDeviation="2" result="soft"/>
+        <feDisplacementMap in="SourceGraphic" in2="soft" scale="38" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+      <symbol id="flower" viewBox="0 0 24 24">
+        <g fill="#E0AED0"><circle cx="12" cy="6" r="4.2"/><circle cx="17.7" cy="10.2" r="4.2"/><circle cx="15.5" cy="17" r="4.2"/><circle cx="8.5" cy="17" r="4.2"/><circle cx="6.3" cy="10.2" r="4.2"/></g>
+        <circle cx="12" cy="12" r="3" fill="#756AB6"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <!-- Nền: blob gradient + cánh hoa rơi -->
+  <div class="bg" aria-hidden="true">
+    <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>
+  </div>
+  <canvas id="petals" aria-hidden="true"></canvas>
+
+  <header class="hdr" id="top">
+    <div class="wrap">
+      <a class="hdr-bar glass glass-lg logo" href="#top" aria-label="một lời chúc, về đầu trang">
+        <svg aria-hidden="true"><use href="#flower"/></svg><span data-site-name>một lời chúc</span>
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ HERO ============ -->
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow hero-in">Ngày Phụ nữ Việt Nam</span>
+          <h1 class="hero-in" data-site-name>một lời chúc</h1>
+          <div class="date hero-in" data-occasion>20 · 10 · 2026</div>
+          <p class="hero-in">Một trang nhỏ để cả phòng gửi lời chúc tới 7 chị em. Mỗi lời chúc chỉ người nhận đọc được.</p>
+          <div class="ctas hero-in" id="hero-ctas">
+            <button class="btn btn-dark" type="button" data-open-send>Viết lời chúc</button>
+            <a class="btn btn-ghost" href="#hop-thu">Mở hộp thư</a>
+          </div>
+          <div class="stat hero-in"><div class="stack" id="hero-stack"></div><span id="hero-total">Đang đếm lời chúc…</span></div>
+        </div>
+        <div class="orbit" id="orbit">
+          <div class="ring glass"><div class="ring-label"><div><b>7 chị em</b><span>của phòng mình</span></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ LỜI CHÚC CHUNG ============ -->
+    <section class="section section-tight" id="loi-chuc">
+      <div class="wrap">
+        <div class="main-wish glass glass-lg reveal">
+          <span class="eyebrow">Lời chúc chung</span>
+          <h2 class="h2" id="main-title"></h2>
+          <p class="q" id="main-body"></p>
+          <div class="sig" id="main-sig"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CÂU CHÚC PHỤ ============ -->
+    <section class="section section-tight">
+      <div class="wrap">
+        <div class="reveal">
+          <span class="eyebrow">Thêm vài điều mong</span>
+          <h2 class="h2">Những điều cả phòng chúc chị em</h2>
+        </div>
+        <div class="sub-grid" id="subs"></div>
+      </div>
+    </section>
+
+    <!-- ============ 7 CHỊ EM ============ -->
+    <section class="section section-tight" id="chi-em">
+      <div class="wrap">
+        <div class="mem-head reveal">
+          <div><span class="eyebrow">7 chị em</span><h2 class="h2">Chọn một người để gửi lời chúc</h2></div>
+          <p class="lead">Không cần đăng nhập. Muốn ẩn danh thì để trống ô tên.</p>
+        </div>
+        <div class="mem-grid" id="members"></div>
+      </div>
+    </section>
+
+    <!-- ============ HỘP THƯ ============ -->
+    <section class="section section-tight" id="hop-thu">
+      <div class="wrap">
+        <div class="inbox" id="inbox-auth">
+          <div class="inbox-copy reveal">
+            <span class="eyebrow">Hộp thư</span>
+            <h2 class="h2">Dành riêng cho 7 chị em</h2>
+            <p class="lead">Đăng nhập bằng email để đọc lời chúc gửi mình. Không cần mật khẩu.</p>
+            <ul>
+              <li><i>1</i><div><b>Chọn tên của mình</b><span>Trang hiện gợi ý email để chị em nhớ dùng email nào.</span></div></li>
+              <li><i>2</i><div><b>Nhập mã 6 số</b><span>Mã được gửi về email, có hiệu lực trong vài phút.</span></div></li>
+              <li><i>3</i><div><b>Mở thiệp</b><span>Mỗi lời chúc là một tấm thiệp, bấm vào để lật.</span></div></li>
+            </ul>
+          </div>
+
+          <div class="reveal">
+            <!-- Bước 1: chọn tên + email -->
+            <form class="panel glass" id="step-login" novalidate>
+              <span class="step">Bước 1 / 2</span>
+              <h3>Bạn là ai?</h3>
+              <div class="pick" id="pick" role="radiogroup" aria-label="Chọn tên của bạn"></div>
+              <div class="field">
+                <label for="login-email">Email của bạn</label>
+                <input id="login-email" class="input" type="email" autocomplete="email" inputmode="email" placeholder="Chọn tên trước" required>
+                <span class="hint" id="login-hint">Chọn tên để xem gợi ý email.</span>
+              </div>
+              <div class="err" id="login-err" role="alert" hidden></div>
+              <button class="btn btn-dark" type="submit" id="login-btn">Gửi mã đăng nhập</button>
+            </form>
+
+            <!-- Bước 2: nhập OTP -->
+            <form class="panel glass" id="step-otp" novalidate hidden>
+              <span class="step">Bước 2 / 2</span>
+              <h3>Nhập mã 6 số</h3>
+              <p class="muted" id="otp-to"></p>
+              <div class="otp" id="otp" role="group" aria-label="Mã đăng nhập 6 số"></div>
+              <div class="err" id="otp-err" role="alert" hidden></div>
+              <div class="row">
+                <button class="btn btn-dark" type="submit" id="otp-btn" disabled>Mở hộp thư</button>
+                <button class="btn btn-ghost btn-sm" type="button" id="otp-resend" disabled>Gửi lại mã</button>
+              </div>
+              <button class="linkish" type="button" id="otp-back">Đổi email khác</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Sau khi đăng nhập: hộp thư hoặc admin -->
+        <div id="inbox-view" hidden></div>
+      </div>
+    </section>
+
+    <div class="fab" id="fab"><button class="btn btn-dark" type="button" data-open-send>Viết lời chúc</button></div>
+  </main>
+
+  <footer class="ftr">
+    <div class="wrap ftr-in">
+      <div>
+        <a class="logo" href="#top"><svg aria-hidden="true"><use href="#flower"/></svg><span data-site-name>một lời chúc</span></a>
+        <p>Cả phòng làm tặng 7 chị em nhân ngày 20/10/2026.</p>
+      </div>
+      <div class="credit">Vibe coding bởi youngboysitinh và em trợ lý 🥲💕</div>
+    </div>
+  </footer>
+
+  <!-- ============ MODAL GỬI LỜI CHÚC ============ -->
+  <div class="overlay" id="send-modal" hidden>
+    <form class="modal glass glass-lg" id="send-form" role="dialog" aria-modal="true" aria-labelledby="send-title" novalidate>
+      <div class="modal-h">
+        <span id="send-av"></span>
+        <div><span class="eyebrow">Gửi lời chúc tới</span><h3 id="send-title">…</h3></div>
+        <button class="x" type="button" data-close aria-label="Đóng">×</button>
+      </div>
+      <div class="field">
+        <label for="send-to">Người nhận</label>
+        <select id="send-to" class="input" required></select>
+      </div>
+      <div class="field">
+        <label for="send-name">Tên của bạn</label>
+        <input id="send-name" class="input" maxlength="60" autocomplete="name" placeholder="Để trống sẽ gửi dưới tên Ẩn danh">
+      </div>
+      <div class="field">
+        <label for="send-msg">Lời chúc</label>
+        <textarea id="send-msg" class="input" maxlength="1000" required placeholder="Viết vài dòng thật lòng…"></textarea>
+        <div class="count-row"><span id="send-note"></span><span id="send-count">0 / 1000</span></div>
+      </div>
+      <div class="err" id="send-err" role="alert" hidden></div>
+      <div class="row row-end">
+        <button class="btn btn-ghost btn-sm" type="button" data-close>Huỷ</button>
+        <button class="btn btn-dark" type="submit" id="send-btn">Gửi lời chúc</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <div class="demo-pill" id="demo-pill" hidden>Chế độ demo · mã OTP: 123456</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

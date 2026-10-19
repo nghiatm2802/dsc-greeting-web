@@ -1,0 +1,7 @@
+.DS_Store
+node_modules/
+# Chứa email thật — không đẩy lên repo public
+*.local.sql
+
+# Cài đặt Claude Code cá nhân
+.claude/settings.local.json

@@ -1,0 +1,19 @@
+{
+  "folders": [
+    { "path": "." }
+  ],
+  "settings": {
+    "files.encoding": "utf8",
+    "editor.tabSize": 2,
+    "editor.formatOnSave": true,
+    "liveServer.settings.port": 5500
+  },
+  "extensions": {
+    "recommendations": [
+      "ritwickdey.LiveServer",
+      "esbenp.prettier-vscode",
+      "bradlc.vscode-tailwindcss",
+      "supabase.vscode-supabase-extension"
+    ]
+  }
+}
