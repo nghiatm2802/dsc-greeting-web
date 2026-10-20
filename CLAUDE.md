@@ -80,3 +80,8 @@ CÒN LẠI:
 - Ảnh 7 chị em: bỏ vào `assets/members/` rồi điền `photo` trong `config.js`.
 - Tạo project Supabase, gửi URL và anon key.
 - Tạo Gmail App Password cho SMTP.
+
+## Gửi nhiều người một lần (20/10)
+- Modal gửi: lưới checkbox (7 chị em + Tester) thay dropdown, ô "Gửi tất cả" = 7 chị em hiển thị (KHÔNG gồm người ẩn).
+- `api.sendWishes(rows)`: một câu insert mảng, mỗi người nhận 1 dòng riêng. Không đổi schema/RLS.
+- `config.js` đã trỏ Supabase thật → test E2E PHẢI chặn config.js (CDP Fetch) để ép DEMO, không gửi thử lên production.
