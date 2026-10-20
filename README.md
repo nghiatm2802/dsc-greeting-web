@@ -63,7 +63,7 @@ Vào **Authentication** → **Sign In / Providers**:
 - Tắt **Allow new users to sign up**. Chỉ những email bạn tạo ở bước 3.4 mới đăng nhập được, và người lạ sẽ nhận lỗi "Email này chưa có trong danh sách chị em".
 - Trong mục **Email**: provider phải đang bật. **Email OTP Length** phải là **6**. **Email OTP Expiration** để 3600 giây (1 giờ) hoặc ngắn hơn tuỳ bạn.
 
-### 3.4. Tạo 9 user
+### 3.4. Tạo 10 user
 
 Vào **Authentication** → **Users** → **Add user** → **Create new user**, rồi lặp lại cho đủ 10 email trong `members.local.sql`:
 
@@ -109,15 +109,15 @@ SMTP mặc định của Supabase chỉ gửi được vài email mỗi giờ, n
 
 **Điền vào Supabase:** vào **Authentication** → **Emails** → tab **SMTP Settings** → bật **Enable Custom SMTP**:
 
-| Ô | Giá trị |
-|---|---|
-| Sender email | địa chỉ Gmail vừa tạo App Password |
-| Sender name | `một lời chúc` |
-| Host | `smtp.gmail.com` |
-| Port | `587` |
-| Username | địa chỉ Gmail (giống Sender email) |
-| Password | App Password 16 ký tự |
-| Minimum interval between emails | để mặc định (60 giây) |
+| Ô                              | Giá trị                               |
+| ------------------------------- | --------------------------------------- |
+| Sender email                    | địa chỉ Gmail vừa tạo App Password |
+| Sender name                     | `một lời chúc`                     |
+| Host                            | `smtp.gmail.com`                      |
+| Port                            | `587`                                 |
+| Username                        | địa chỉ Gmail (giống Sender email)  |
+| Password                        | App Password 16 ký tự                 |
+| Minimum interval between emails | để mặc định (60 giây)             |
 
 Bấm **Save**.
 
@@ -174,19 +174,69 @@ Mọi nội dung nằm trong `js/config.js`:
   - Muốn dùng ảnh thật: bỏ ảnh vào `assets/members/` rồi điền `photo: "assets/members/ha.jpg"`. Để `null` thì trang dùng avatar vẽ.
 - `adminLabel`: nhãn hiển thị của tài khoản admin (đang là "Test").
 
-## 6. Xử lý sự cố
+## 6. Đổi email của một người
 
-| Hiện tượng | Cách xử lý |
+Mỗi người nhận (chị em, admin, Tester) gắn với **đúng 1 email**. Email thật **không nằm trong code** mà nằm ở 2 chỗ trên Supabase. Đổi email phải sửa cả 2 chỗ, rồi nếu cần thì sửa thêm gợi ý trong `config.js`.
+
+Ví dụ: đổi email của Linh Chis (`member_id` = `chi`) sang `linh.moi@gmail.com`.
+
+**Bước 1: sửa bảng `members`**
+
+1. Mở `supabase/members.local.sql` trên máy, sửa email ở dòng của `chi`. Email viết **chữ thường**:
+   ```sql
+   ('chi',   'linh.moi@gmail.com',   'member'),  -- Linh Chis
+   ```
+2. Supabase → **SQL Editor** → dán toàn bộ file → **Run**. File có `on conflict ... do update`, nên chạy lại sẽ ghi email mới đè lên dòng cũ. Các dòng khác giữ nguyên.
+
+> Có thể sửa nhanh ô `email` trực tiếp trong **Table Editor** → bảng `members`. Nhưng vẫn phải sửa cả file `members.local.sql`, nếu không lần sau chạy lại file sẽ ghi đè về email cũ.
+
+**Bước 2: thay user đăng nhập**
+
+1. Supabase → **Authentication** → **Users** → tìm email cũ → nút **⋯** → **Delete user**.
+2. **Add user** → **Create new user**:
+   - **Email**: email mới, giống hệt bước 1.
+   - **Password**: chuỗi bất kỳ.
+   - Tick **Auto Confirm User**.
+
+> Lời chúc **không bị mất** khi xoá user, vì lời chúc gắn với `member_id` (`chi`) chứ không gắn với tài khoản đăng nhập. Đăng nhập bằng email mới vẫn thấy đủ lời chúc cũ.
+
+**Bước 3: sửa gợi ý email (chỉ khi gợi ý thay đổi)**
+
+Trang chỉ gửi mã nếu email gõ vào khớp **phần đầu và tên miền** của `emailHint`. Ví dụ đổi từ `ch***@dsc.com.vn` sang `linh.moi@gmail.com` thì gợi ý cũ không còn khớp, phải sửa trong `js/config.js`:
+
+```js
+{ id: "chi", name: "Linh Chis", ..., emailHint: "li***@gmail.com" },
+```
+
+Chỉ ghi dạng che (2 ký tự đầu + `***` + tên miền). **Không** ghi email đầy đủ vì repo public. Sửa xong thì commit + push để trang trên GitHub Pages cập nhật.
+
+Nếu email mới vẫn khớp gợi ý cũ (ví dụ `chi.nguyen@dsc.com.vn` → `chi.tran@dsc.com.vn`, cùng khớp `ch***@dsc.com.vn`) thì bỏ qua bước này.
+
+**Bước 4: thử lại**
+
+Chọn tên người đó trong **Hộp thư** → nhập email mới → nhận mã → vào đúng hộp thư.
+
+| Kết quả | Nguyên nhân |
 |---|---|
-| Không nhận được mã | Xem mục Spam. Kiểm tra SMTP (App Password đúng chưa, đã bỏ dấu cách chưa). Vào **Logs** → **Auth** trên Supabase xem lỗi. |
-| "Email này chưa có trong danh sách" | Email chưa được tạo ở **Authentication → Users**, hoặc gõ sai. |
-| "Đăng nhập được nhưng chưa được gán cho chị em nào" | Email trong **Users** không có trong bảng `members`, hoặc lệch chữ hoa/thường. Sửa rồi chạy lại `members.local.sql`. |
-| "Bạn thao tác hơi nhanh" | Bị giới hạn gửi mail. Đợi 1 phút, hoặc tăng Rate Limits (mục 3.6). |
-| "Mã không đúng hoặc đã hết hạn" | Dùng mã trong email **mới nhất**. Mỗi lần bấm "Gửi lại mã" thì mã cũ hết hiệu lực. |
-| Email có link mà không có mã | Template Magic Link thiếu `{{ .Token }}` (mục 3.5). |
-| Số lời chúc không hiện | Chưa chạy `schema.sql`, hoặc sai URL/key trong `config.js`. Mở DevTools → Console để xem lỗi. |
+| "Email chưa khớp với gợi ý" | Chưa làm bước 3, hoặc push chưa xong (đợi 1–2 phút rồi tải lại trang). |
+| "Email này chưa có trong danh sách" | Chưa làm bước 2. |
+| "Đăng nhập được nhưng chưa được gán cho chị em nào" | Email ở bước 1 và bước 2 không giống nhau. |
 
-## 7. Checklist trước ngày 20/10
+**Đổi email admin:** làm giống hệt, với dòng `admin` hoặc `admin2`. Gợi ý nằm ở `adminEmailHint` trong `config.js`. Hai email cách nhau bằng chữ `hoặc`, ví dụ `"ng***@gmail.com hoặc ng***@dsc.com.vn"`.
+
+## 7. Xử lý sự cố
+
+| Hiện tượng                                                     | Cách xử lý                                                                                                                                        |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Không nhận được mã                                          | Xem mục Spam. Kiểm tra SMTP (App Password đúng chưa, đã bỏ dấu cách chưa). Vào **Logs** → **Auth** trên Supabase xem lỗi. |
+| "Email này chưa có trong danh sách"                           | Email chưa được tạo ở **Authentication → Users**, hoặc gõ sai.                                                                        |
+| "Đăng nhập được nhưng chưa được gán cho chị em nào" | Email trong **Users** không có trong bảng `members`, hoặc lệch chữ hoa/thường. Sửa rồi chạy lại `members.local.sql`.           |
+| "Bạn thao tác hơi nhanh"                                       | Bị giới hạn gửi mail. Đợi 1 phút, hoặc tăng Rate Limits (mục 3.6).                                                                         |
+| "Mã không đúng hoặc đã hết hạn"                          | Dùng mã trong email **mới nhất**. Mỗi lần bấm "Gửi lại mã" thì mã cũ hết hiệu lực.                                             |
+| Email có link mà không có mã                                 | Template Magic Link thiếu `{{ .Token }}` (mục 3.5).                                                                                              |
+| Số lời chúc không hiện                                       | Chưa chạy `schema.sql`, hoặc sai URL/key trong `config.js`. Mở DevTools → Console để xem lỗi.                                            |
+
+## 8. Checklist trước ngày 20/10
 
 - [ ] Bảng `members` có 10 dòng, **Users** có 10 user (đã Auto Confirm).
 - [ ] Đã tắt đăng ký tự do (Allow new users to sign up: off).

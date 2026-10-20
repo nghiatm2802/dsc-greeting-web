@@ -207,10 +207,11 @@
         </div>
         <button class="x" type="button" data-close aria-label="Đóng">×</button>
       </div>
-      <div class="field">
-        <label for="send-to">Người nhận</label>
-        <select id="send-to" class="input" required></select>
-      </div>
+      <fieldset class="field to-field">
+        <legend>Người nhận <span class="to-n" id="send-to-n"></span></legend>
+        <label class="to-all"><input type="checkbox" id="send-all"> Gửi tất cả</label>
+        <div class="to-grid" id="send-to" role="group" aria-label="Chọn người nhận, chọn được nhiều người"></div>
+      </fieldset>
       <div class="field">
         <label for="send-name">Tên của bạn</label>
         <input id="send-name" class="input" maxlength="60" autocomplete="name"
