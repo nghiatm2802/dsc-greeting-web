@@ -50,11 +50,12 @@
         for (const w of all()) c[w.recipient_id] = (c[w.recipient_id] || 0) + 1;
         return c;
       },
-      async sendWish(row) {
+      async sendWishes(rows) {
         await wait(350);
-        if (!byId[row.recipient_id]) throw new Error("new row violates row-level security policy");
-        const id = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now() + Math.random());
-        store.set(K.wishes, [...all(), { id, ...row, created_at: new Date().toISOString() }]);
+        if (rows.some((r) => !byId[r.recipient_id])) throw new Error("new row violates row-level security policy");
+        const now = new Date().toISOString();
+        const uid = () => (crypto.randomUUID && crypto.randomUUID()) || String(Date.now() + Math.random());
+        store.set(K.wishes, [...all(), ...rows.map((r) => ({ id: uid(), ...r, created_at: now }))]);
       },
       async requestOtp(email, pickId) {
         await wait(450);
@@ -102,9 +103,10 @@
         for (const r of data || []) c[r.recipient_id] = Number(r.total) || 0;
         return c;
       },
-      async sendWish(row) {
+      async sendWishes(rows) {
+        // Một câu insert cho cả mảng: lỗi 1 dòng thì không dòng nào được ghi.
         // Không .select() sau insert: anon không có quyền đọc bảng wishes
-        const { error } = await sb.from("wishes").insert(row);
+        const { error } = await sb.from("wishes").insert(rows);
         if (error) throw error;
       },
       async requestOtp(email) {
@@ -344,8 +346,9 @@
       `<button type="button" role="radio" aria-checked="false" data-pick="${esc(m.id)}">${avatar(m, { badge: false })}${esc(m.name)}</button>`).join("") +
       `<button type="button" role="radio" aria-checked="false" data-pick="${ADMIN_ID}"><span class="admin-ic" aria-hidden="true">★</span>${esc(ADMIN_LABEL)}</button>`;
 
-    $("#send-to").innerHTML = `<option value="">Chọn một chị em…</option>` +
-      members.map((m) => `<option value="${esc(m.id)}">${esc(m.name)}</option>`).join("");
+    $("#send-to").innerHTML = members.map((m) =>
+      `<label class="to-opt"><input type="checkbox" value="${esc(m.id)}">${avatar(m, { badge: false })}` +
+      `<span class="nm">${esc(m.name)}</span><span class="tick" aria-hidden="true">✓</span></label>`).join("");
 
     if (DEMO) $("#demo-pill").hidden = false;
   }
@@ -378,11 +381,34 @@
   let lastFocus = null;
   let cooldownTimer = null;
 
+  const toBoxes = () => $$("#send-to input");
+  const selectedTo = () => toBoxes().filter((i) => i.checked && byId[i.value]).map((i) => i.value);
+  // "Gửi tất cả" = 7 chị em đang hiển thị (không gồm người ẩn)
+  const isAllShown = (ids) => shown.every((m) => ids.includes(m.id));
+  function joinNames(names) {
+    return names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} và ${names[names.length - 1]}`;
+  }
+  function recipientsLabel(ids) {
+    if (ids.length === shown.length && isAllShown(ids)) return `cả ${shown.length} chị em`;
+    return ids.length <= 3 ? joinNames(ids.map((id) => byId[id].name)) : `${ids.length} người`;
+  }
+
   function updateSendHeader() {
-    const m = byId[$("#send-to").value];
-    $("#send-av").innerHTML = m ? avatar(m, { badge: false }) : `<span class="av" style="--tint:var(--tint-2);display:grid;place-items:center">${flowerSvg(28)}</span>`;
-    $("#send-title").textContent = m ? m.name : "Chọn một chị em";
-    $("#send-note").textContent = m ? `Chỉ ${m.name} đọc được lời chúc này.` : "Chỉ người nhận đọc được lời chúc.";
+    const ids = selectedTo();
+    const all = $("#send-all");
+    const shownPicked = shown.filter((m) => ids.includes(m.id)).length;
+    all.checked = shownPicked === shown.length;
+    all.indeterminate = shownPicked > 0 && shownPicked < shown.length;
+    $("#send-to-n").textContent = ids.length ? `· đã chọn ${ids.length}` : "· chọn một hoặc nhiều người";
+
+    const m = ids.length === 1 ? byId[ids[0]] : null;
+    $("#send-av").innerHTML = m ? avatar(m, { badge: false })
+      : ids.length ? `<span class="stack">${ids.slice(0, 3).map((id) => avatar(byId[id], { badge: false })).join("")}</span>`
+      : `<span class="av" style="--tint:var(--tint-2);display:grid;place-items:center">${flowerSvg(28)}</span>`;
+    const label = recipientsLabel(ids);
+    $("#send-title").textContent = ids.length ? label.charAt(0).toUpperCase() + label.slice(1) : "Chọn người nhận";
+    $("#send-note").textContent = m ? `Chỉ ${m.name} đọc được lời chúc này.`
+      : ids.length ? "Mỗi người nhận một bản, chỉ đọc được bản gửi mình." : "Chỉ người nhận đọc được lời chúc.";
   }
   function updateSendCount() {
     const n = $("#send-msg").value.length;
@@ -403,10 +429,11 @@
 
   function openSend(id) {
     lastFocus = document.activeElement;
-    if (id && byId[id]) $("#send-to").value = id;
+    if (id && byId[id]) toBoxes().forEach((i) => { i.checked = i.value === id; });
     updateSendHeader();
     updateSendCount();
     showErr($("#send-err"), "");
+    $("#send-to").removeAttribute("aria-invalid");
     $("#send-modal").hidden = false;
     document.body.classList.add("modal-open");
     startCooldownTicker();
@@ -414,7 +441,7 @@
       gsap.fromTo("#send-modal", { opacity: 0 }, { opacity: 1, duration: .25 });
       gsap.fromTo("#send-form", { y: 30, scale: .98 }, { y: 0, scale: 1, duration: .45, ease: "power3.out" });
     }
-    setTimeout(() => ($("#send-to").value ? $("#send-msg") : $("#send-to")).focus(), 60);
+    setTimeout(() => (selectedTo().length ? $("#send-msg") : toBoxes()[0]).focus(), 60);
   }
   function closeSend() {
     $("#send-modal").hidden = true;
@@ -441,15 +468,21 @@
       }
     });
     $("#send-to").addEventListener("change", () => { updateSendHeader(); $("#send-to").removeAttribute("aria-invalid"); });
+    $("#send-all").addEventListener("change", (e) => {
+      const on = e.target.checked;
+      toBoxes().forEach((i) => { if (!byId[i.value].hidden) i.checked = on; });
+      updateSendHeader();
+      $("#send-to").removeAttribute("aria-invalid");
+    });
     $("#send-msg").addEventListener("input", () => { updateSendCount(); $("#send-msg").removeAttribute("aria-invalid"); });
 
     $("#send-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const err = $("#send-err");
-      const to = $("#send-to").value;
+      const to = selectedTo();
       const name = $("#send-name").value.trim().slice(0, NAME_MAX);
       const msg = $("#send-msg").value.trim();
-      if (!byId[to]) { $("#send-to").setAttribute("aria-invalid", "true"); showErr(err, "Chọn người nhận trước nhé."); $("#send-to").focus(); return; }
+      if (!to.length) { $("#send-to").setAttribute("aria-invalid", "true"); showErr(err, "Chọn ít nhất một người nhận nhé."); toBoxes()[0].focus(); return; }
       if (!msg) { $("#send-msg").setAttribute("aria-invalid", "true"); showErr(err, "Hãy viết vài dòng trước khi gửi."); $("#send-msg").focus(); return; }
       if (msg.length > MSG_MAX) { showErr(err, `Lời chúc dài tối đa ${MSG_MAX} ký tự.`); return; }
       if (cooldownLeft() > 0) { showErr(err, "Đợi vài giây rồi gửi tiếp nhé."); return; }
@@ -460,14 +493,14 @@
       btn.dataset.busy = "1";
       setBusy(btn, true, "Đang gửi…");
       try {
-        await api.sendWish({ recipient_id: to, sender_name: name || null, message: msg });
-        counts[to] = (counts[to] || 0) + 1;
+        await api.sendWishes(to.map((id) => ({ recipient_id: id, sender_name: name || null, message: msg })));
+        for (const id of to) counts[id] = (counts[id] || 0) + 1;
         renderCounts();
         store.set(LAST_SEND_KEY, Date.now());
         $("#send-msg").value = "";
         closeSend();
         celebrate();
-        toast(`Đã gửi lời chúc tới ${byId[to].name}`);
+        toast(`Đã gửi lời chúc tới ${recipientsLabel(to)}`);
       } catch (ex) {
         console.error(ex);
         showErr(err, viError(ex));
